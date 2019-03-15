@@ -1,0 +1,35 @@
+html
+    head
+        script.
+            function isCourseActive(){
+                const z = JSON.parse('!{Courses}');
+                console.log(Courses);
+                console.log('#{Courses}');
+                for (let i in Courses ){
+                    if (Date.now() < !{Courses}[i].cStartDt ){
+                        //console.log( 'a'+'#{msg}' );
+                        console.log(Date.now());
+                        document.getElementById('enroll'+!{Courses}[i].cId).disabled = true;
+                    }
+                }
+            }
+            window.onload = isCourseActive;        
+    body
+        form(action='/student/:{RegNo}/registerCourse', method='POST')
+            table
+                p 
+                tr
+                    th Course Id
+                    th Course Name
+                    th Course Start Date
+                    th No. of Students
+                    th Enroll
+                each course in Courses                
+                    tr
+                        td !{course.cId}
+                        td #{course.cName}
+                        td #{course.cStartDt}
+                        td #{course.std}    
+                        td
+                            input(type='checkbox' name='enroll'+course.cId value='Enroll' id='enroll'+course.cId )
+            input(type='submit' name='Enroll')

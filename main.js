@@ -11,7 +11,7 @@ app.set('view engine', 'pug');
 
 let adminCourses = [];
 let studentLogin = [
-    { RegNo: 1, Password: 'q' },
+    { RegNo: 1, Password: 'test1' },
     { RegNo: 2, Password: 'test2' },
     { RegNo: 3, Password: 'test3' },
     { RegNo: 4, Password: 'test4' },
@@ -27,9 +27,13 @@ let std1 = [],
     std6 = [];
 let loginFlag = 0;
 
-//MiddleWare Code
+//MiddleWare Code to update the status of course.
 app.use((req, res, next) => {
     console.log(req);
+    adminCourses.forEach(c => {
+        if (c.std >= 5) c.admStatus = "Active";
+        else c.admStatus = "Inactive";
+    });
     next();
 });
 
@@ -75,31 +79,46 @@ app.post('/student', (req, res) => {
     throw new Error("Invalid name");
 });
 
+//Redirect any request coming to this URL to /student.
+app.get('/student/:RegNo/', (req, res) => {
+    res.redirect('/student');
+});
+
 app.get('/student/:RegNo/registerCourse', (req, res) => {
-    //Display all the courses from the ViewAllCourses Page. Show the number of students enrolled.  
-    console.log(currentRegNo);
-    //res.body = {};
-    //res.body.Courses = JSON.stringify(adminCourses);
-    // res.body.student = JSON.stringify(true);
+    //Display all the courses from the ViewAllCourses Page. 
+    //Show the status of course.  
+    adminCourses.forEach(element => {
+        if (Date.now() < Date.parse(element.cStartDt)) {
+            element.stdStatus = "active";
+        } else {
+            element.stdStatus = "Inactive";
+        }
+    });
     res.render('ViewAllCourse.pug', { Courses: adminCourses, student: true });
 });
 
 app.post('/student/:RegNo/registerCourse', (req, res) => {
-    console.log(req.body);
     //Find the course details.
-    //If the details exist in the std array,then pop message that: You have already enrolled in the course.
+    //If the details exist in the std array,then don't enroll it and throw error.
+    let flag = 0;
     const tobeRegisteredCourse = eval('std' + currentRegNo).find(c => 'enroll' + c[0] in req.body);
     console.log(tobeRegisteredCourse);
     if (tobeRegisteredCourse) {
-        //res.status(401).render('enrolledCourse.pug');
         res.render('enrolledCourse.pug', { Courses: eval('std' + currentRegNo), msg: "Course with same Id is already registered." });
     } //Append the course in that std array.
     else {
         for (let i = 0; i < adminCourses.length; i++) {
             let enrollcId = 'enroll' + adminCourses[i].cId;
             if (enrollcId in req.body) {
-                eval('std' + currentRegNo).push([adminCourses[i].cId, adminCourses[i].cName, adminCourses[i].cStartDt]);
-                adminCourses[i].std += 1;
+                //If status inactive of Course for std, than don't enroll.
+                if (adminCourses[i].stdStatus === "Inactive") {
+                    res.status(401).send("Courses you selected are Inactive.");
+                    flag = 1;
+                    return;
+                } else {
+                    eval('std' + currentRegNo).push([adminCourses[i].cId, adminCourses[i].cName, adminCourses[i].cStartDt]);
+                    adminCourses[i].std += 1;
+                }
             }
         }
         res.render('enrolledCourse.pug', { Courses: eval('std' + currentRegNo) });
@@ -111,16 +130,13 @@ app.get('/student/:RegNo/unenrollCourse', (req, res) => {
 });
 
 app.post('/student/:RegNo/unenrollCourse', (req, res) => {
-    console.log(req.body);
+    //Delete the course from std array and reduce the overall count in adminCourses array.
     for (let i = 0; i < eval('std' + currentRegNo).length; i++) {
         let cUnenroll = 'Unenroll' + eval('std' + currentRegNo)[i][0];
-        console.log(cUnenroll);
         if (cUnenroll in req.body) {
-            //console.log(adminCourses.find(eval('std' + currentRegNo)[i][0]));
             for (let j = 0; j < eval('std' + currentRegNo).length; j++) {
                 if (adminCourses[j].cId === eval('std' + currentRegNo)[i][0]) {
                     adminCourses[j].std -= 1;
-                    console.log(adminCourses[j]);
                 }
             }
             eval('std' + currentRegNo).splice(i, 1);
@@ -138,7 +154,6 @@ app.get('/admin/addCourse', (req, res) => {
 });
 
 app.post('/admin/addCourse', (req, res) => {
-    console.log(req.body);
     //All fields should be filled.
     const schema = {
         cId: joi.number().required(),
@@ -146,25 +161,18 @@ app.post('/admin/addCourse', (req, res) => {
         cStartDt: joi.date().required()
     }
     const result = joi.validate(req.body, schema, (err, value) => {
-        // function getPosition(string, subString, index) {
-        //     return string.split(subString, index).join(subString).length;
-        // }
         if (err) {
-            //const pos = getPosition(err.details[0].message, '\'', 2);
-            //res.status(400).send(err.details[0].message.substr(pos, 15));
             res.status(400).send(err.details[0].message);
             return;
         } else {
             //Validate that a course with given id is already present or not.
             //If not throw error and again redirect to that same page.
+            //If yes, Add the course to the array with all the properties and redirect to the success page.
             const tobeAddedCourse = adminCourses.find(c => c.cId === req.body.cId);
             if (tobeAddedCourse) {
-                //res.status(401).send("Course with same Id already exists.");
                 res.render('ViewAllCourse.pug', { Courses: adminCourses, msg: "Course with same Id already exists." });
-            } //If yes, Add the course to the array with all the properties and redirect to the success page.
-            else {
+            } else {
                 adminCourses.push({ 'cName': req.body.cName, 'cId': req.body.cId, 'cStartDt': req.body.cStartDt, 'std': 0 });
-                console.log(adminCourses);
                 res.render('welcome.pug', { cName: req.body.cName });
             }
         }
@@ -180,32 +188,23 @@ app.get('/admin/delCourse', (req, res) => {
 });
 
 app.post('/admin/delCourse', (req, res) => {
-    //Delete that entry from array.
-    console.log(req.body);
+    //Delete that entry from array of admin as well as each std who has enrolled that course.
     for (let i = 0; i < adminCourses.length; i++) {
         let cDel = 'del' + adminCourses[i].cId;
-        console.log(cDel);
         if (cDel in req.body) {
+            for (let j = 1; j < 6; j++) {
+                for (let k = 0; k < eval('std' + j).length; k++) {
+                    if (adminCourses[i].cId === eval('std' + j)[k][0]) {
+                        eval('std' + j).splice(k, 1);
+                    }
+                }
+            }
             adminCourses.splice(i, 1);
-            console.log(adminCourses);
-            res.render('ViewAllCourse.pug', { Courses: adminCourses });
         }
     }
+    res.render('ViewAllCourse.pug', { Courses: adminCourses });
 });
 
 console.log("Welcome to my Mini Project");
 
 app.listen(3000);
-
-// app.get('/', (req, res) => {
-//     console.log(req.headers.name);
-//     s = req.headers.name;
-//     res.write(req.headers.name);
-//     res.write("sent successful");
-//     //res.send("hi"); // In res.send();, we send things through headers, while in res.write() it is normal packet. we need to have res.end() after res.write() to stop the server.
-//     res.end(); //This only ends that request, not the server.
-// });
-
-
-//When admin deletes course, all things for each student should be deleted.
-//After enrolling course from other user, we are not getting the enrolled course of that user on the enrolledCourse page while it is updated in backend.

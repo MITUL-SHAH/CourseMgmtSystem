@@ -1,0 +1,12 @@
+html
+    body
+        h3 Your RegNo is: #{RegNo}
+        h4 You have following privileges:
+        form(action='/student/:{RegNo}/registerCourse')
+            input(type='submit' value='registerCourse')
+        form(action='/student/:{RegNo}/unenrollCourse')
+            input(type='submit' value='unenrollCourse')
+        form(action='/student/:{RegNo}/enrolledCourse')
+            input(type='submit' value='enrolledCourse')
+        form(action='/',method='POST')
+            input(type='submit' value='Logout')

@@ -1,0 +1,30 @@
+html
+    body
+        h3 #{msg}
+        h4 Your enrolled Courses are:
+        if !unenroll
+            table
+                tr
+                    th Course Id
+                    th Course Name
+                    th Course Start Date
+                each course in Courses                
+                    tr
+                        td #{course[0]}
+                        td #{course[1]}
+                        td #{course[2]}
+        else 
+            table
+                tr
+                    th Course Id
+                    th Course Name
+                    th Course Start Date
+                    th Unenroll Course
+                each course in Courses                
+                    tr
+                        td #{course[0]}
+                        td #{course[1]}
+                        td #{course[2]}
+                        td 
+                            form(action='/student/:RegNo/unenrollCourse',method='POST')
+                                input(type='submit' name='Unenroll'+course[0] value='Unenroll')

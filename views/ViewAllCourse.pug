@@ -1,0 +1,57 @@
+html       
+    body
+        h3 Courses
+        if msg
+            h3 #{msg}
+        if del
+            table
+                tr
+                    th Course Id
+                    th Course Name
+                    th Course Start Date
+                    th No. of Students
+                    th Delete
+                each course in Courses
+                    tr
+                        td #{course.cId}
+                        td #{course.cName}
+                        td #{course.cStartDt}
+                        td #{course.std}
+                        td
+                            form(action='/admin/delCourse', method='POST')
+                                input(type='submit' name='del'+course.cId value='Delete')
+        else if student
+            form(action='/student/:{RegNo}/registerCourse', method='POST')
+                table
+                    tr
+                        th Course Id
+                        th Course Name
+                        th Course Start Date
+                        th No. of Students
+                        th Enroll
+                        th Status
+                    each course in Courses                
+                        tr
+                            td #{course.cId}
+                            td #{course.cName}
+                            td #{course.cStartDt}
+                            td #{course.std}    
+                            td
+                                input(type='checkbox' name='enroll'+course.cId value='Enroll' id='enroll'+course.cId )
+                            td #{course.stdStatus}
+                input(type='submit' name='Enroll')
+        else if !del && !student
+            table
+                tr
+                    th Course Id
+                    th Course Name
+                    th Course Start Date
+                    th No. of Students
+                    th Status
+                each course in Courses                
+                    tr
+                        td #{course.cId}
+                        td #{course.cName}
+                        td #{course.cStartDt}
+                        td #{course.std}
+                        td #{course.admStatus}

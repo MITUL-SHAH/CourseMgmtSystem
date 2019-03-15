@@ -1,0 +1,11 @@
+html
+    body
+        h1 Course Addition Form
+        form(action='/admin/addCourse',method='POST')
+            label CourseId
+            input(type='text',name='cId') 
+            label CourseName
+            input(type="text",name='cName') 
+            label CourseStartDate
+            input(type="date",name='cStartDt') 
+            input(type='submit')

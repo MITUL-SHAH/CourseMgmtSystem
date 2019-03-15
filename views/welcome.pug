@@ -1,0 +1,20 @@
+html
+    body
+        h2 Welcome #{person}
+        if person == 'admin'
+            h4 You have the following privileges:
+            form(action='/admin/addCourse')
+                input(type='submit' value='CourseAddition')
+            form(action='/admin/delCourse')
+                input(type='submit' value='CourseDeletion')
+            form(action='/admin/viewAllCourse')
+                input(type='submit' value='ViewAllCourses')
+
+        else if person == 'student'
+            h4 Login 
+            form(action='/student' method='POST')
+                input(type='text' name='RegNo')
+                input(type='password' name='Password')
+                input(type='submit' value='Login')
+        if cName
+            p Added Course titled #{cName} successfully.
